@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+require 'nmfbot'
+
+# Check if environment variables are set
+['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'REDDIT_CLIENT_ID',
+ 'REDDIT_CLIENT_SECRET', 'REDDIT_USERNAME',
+ 'REDDIT_PASSWORD'].each do |x|
+  raise ArgumentError "#{x} not set" unless ENV.include?(x)
+end
+
+debug = ENV['ENVIRONMENT'] == 'dev'
+
+nmfbot = NMFbot::NMFbot.new(
+  spotify_client_id: ENV['SPOTIFY_CLIENT_ID'],
+  spotify_client_secret: ENV['SPOTIFY_CLIENT_SECRET'],
+  reddit_client_id: ENV['REDDIT_CLIENT_ID'],
+  reddit_client_secret: ENV['REDDIT_CLIENT_SECRET'],
+  reddit_username: ENV['REDDIT_USERNAME'],
+  reddit_password: ENV['REDDIT_PASSWORD'],
+  debug: debug
+)
+
+nmf_thread = nmfbot.nmf_thread
+
+new_releases = nmfbot.new_releases(nmf_thread)
+puts new_releases if debug
+
+album_search_results = []
+new_releases.each do |release|
+  puts "Searching Spotify for #{release}" if debug
+  result = nmfbot.search_for_album(artist: release[:artist],
+                                   album: release[:album])
+  if result.nil?
+    puts "WARNING: No match found for #{release}"
+  else
+    album_search_results << result
+  end
+end
+
+puts 'Getting full album info from Spotify' if debug
+albums = nmfbot.albums(album_search_results)
+puts "Got #{albums.size} albums" if debug
+
+tracks = []
+albums.each do |album|
+  puts "Finding the most popular tracks for #{album['name']}" if debug
+  tracks += nmfbot.find_most_popular_tracks(album)
+end
+
+puts 'Creating playlist' if debug
+playlist = nmfbot.create_playlist(nmfbot.title(nmf_thread))
+
+puts 'Adding tracks to playlist' if debug
+nmfbot.add_tracks_to_playlist(tracks, playlist)
+
+puts '-------------------'
+puts "Found matches for #{album_search_results.size} of #{new_releases.size} albums."
+puts "Here's your playlist."
+puts "#{playlist['name']}: #{playlist['href']}"

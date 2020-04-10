@@ -1,0 +1,3 @@
+* nmf.rb - New Music Friday
+** Overview
+This script creates a playlist on Spotify of the most popular tracks from new albums listed on r/indieheads' New Music Friday thread.
