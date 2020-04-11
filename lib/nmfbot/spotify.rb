@@ -8,6 +8,7 @@
 require 'net/http'
 require 'base64'
 require 'json'
+require 'time'
 
 module NMFbot
   class SpotifyScraper
@@ -17,18 +18,24 @@ module NMFbot
     # @param scope [String] Spotify scope. See:
     #   https://developer.spotify.com/documentation/general/guides/authorization-guide/#list-of-scopes
     #   For the New Music Friday playlist, we just need `playlist-modify-public`.
-    def initialize(client_id, client_secret, redirect_uri: 'http://localhost/',
+    def initialize(client_id:, client_secret:, redirect_uri: 'http://localhost/',
                    scope: 'playlist-modify-public')
       @client_id = client_id
       @client_secret = client_secret
       @redirect_uri = redirect_uri
       @scope = scope
 
-      # Step 1 in authorization guide
-      @authorization_code = request_authorization_code
-
-      # Step 2 in authorization guide
-      @access_token = request_access_token
+      # Load token from file, if it exists, so we can skip the auth flow
+      if File.exist?(TOKEN_FILE)
+        f = File.open(TOKEN_FILE, 'r')
+        @access_token = JSON.load(f)
+        f.close
+      else
+        # Step 1 in authorization guide
+        @authorization_code = request_authorization_code
+        # Step 2 in authorization guide
+        @access_token = request_access_token
+      end
     end
 
     # @param url [String] URL to "webify"
@@ -71,15 +78,23 @@ module NMFbot
       )
 
       response = http.request(request)
-      # TODO: add logic to handle bad responses
+      unless response.code == '200'
+        raise StandardError, "Bad response. #{response.code} #{response.body}"
+      end
+      
+      token = JSON.parse(response.body)
 
-      JSON.parse(response.body)
+      # Adding a `created` timestamp to determine when the token needs to be
+      # refreshed.
+      token['created'] = Time.now
       # The returned token looks like this:
       # {"access_token"=>"your token", "token_type"=>"Bearer",
       #  "expires_in"=>3600, "refresh_token"=>"your refresh token",
       #  "scope"=>"playlist-modify-public"}
-
-      # TODO: Add logic to handle token refresh
+      File.open(TOKEN_FILE, 'w') do |f|
+        f.write(token.to_json)
+      end
+      token
     end
 
     # @param endpoint [String] Spotify API to GET

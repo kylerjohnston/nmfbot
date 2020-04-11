@@ -6,6 +6,8 @@ require 'nmfbot/reddit'
 # Namespace module for nmfbot gem functionality
 module NMFbot
   VERSION = '0.1.0'
+  CONFIG_DIR = File.expand_path('~/.nmfbot')
+  TOKEN_FILE = "#{CONFIG_DIR}/spotify_token.json"
 
   # NMFbot class
   class NMFbot
@@ -37,8 +39,12 @@ module NMFbot
         puts "Reddit password: #{reddit_password}"
       end
 
+      # Create config directory to store Spotify token
+      Dir.mkdir(CONFIG_DIR) unless Dir.exist?(CONFIG_DIR)
+
       puts 'Creating Spotify session.' if debug
-      @spotify = SpotifyScraper.new(spotify_client_id, spotify_client_secret)
+      @spotify = SpotifyScraper.new(client_id: spotify_client_id,
+                                    client_secret: spotify_client_secret)
 
       # Create Redd session
       # TODO remove Redd dependency; write a simpler API wrapper
