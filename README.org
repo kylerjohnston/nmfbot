@@ -17,7 +17,7 @@ The following need to be set as environment variables:
 - ~REDDIT_CLIENT_SECRET~
 - ~REDDIT_USERNAME~
 - ~REDDIT_PASSWORD~
-- ~ENVIRONMENT='dev'~ (optional: enables verbose logging)
+- ~ENVIRONMENT~ (optional: setting to ~dev~ enables verbose logging)
 ** Usage
 Running ~nmfbot~ with no arguments will look at the sidebar on [[https://reddit.com/r/indieheads/][/r/indieheads]] to find the most recent New Music Friday thread, and then create a playlist from that thread.
 
