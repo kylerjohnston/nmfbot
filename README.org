@@ -18,6 +18,16 @@ The following need to be set as environment variables:
 - ~REDDIT_USERNAME~
 - ~REDDIT_PASSWORD~
 - ~ENVIRONMENT~ (optional: setting to ~dev~ enables verbose logging)
+
+** Installation
+#+begin_src shell
+git clone https://github.com/kylerjohnston/nmfbot.git
+cd nmfbot
+bundle install
+gem build nmfbot.gemspec
+gem install nmfbot*.gem
+#+end_src
+
 ** Usage
 Running ~nmfbot~ with no arguments will look at the sidebar on [[https://reddit.com/r/indieheads/][/r/indieheads]] to find the most recent New Music Friday thread, and then create a playlist from that thread.
 
