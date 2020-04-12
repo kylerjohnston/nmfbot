@@ -1,3 +1,38 @@
-* nmf.rb - New Music Friday
+* nmfbot - New Music Friday Bot
 ** Overview
-This script creates a playlist on Spotify of the most popular tracks from new albums listed on r/indieheads' New Music Friday thread.
+This program creates Spotify playlists of the most popular tracks from new albums listed on [[https://reddit.com/r/indieheads/][/r/indieheads']] New Music Friday threads.
+** Prerequisites
+**** Spotify developer account
+Create a [[https://developer.spotify.com/dashboard/][Spotify developer account]] and an application registered with client ID and secret.
+**** Reddit account and application client ID and secret
+You probably want to make a new Reddit account for this. Then, register an application for it at [[https://www.reddit.com/prefs/apps][https://www.reddit.com/prefs/apps]].
+**** Rubygem dependencies
+It depends on the [[https://rubygems.org/gems/redd/versions/0.8.8][redd]] gem. Install it by running ~bundle install~ in the root directory of this repository.
+
+** Environment variables
+The following need to be set as environment variables:
+- ~SPOTIFY_CLIENT_ID~
+- ~SPOTIFY_CLIENT_SECRET~
+- ~REDDIT_CLIENT_ID~
+- ~REDDIT_CLIENT_SECRET~
+- ~REDDIT_USERNAME~
+- ~REDDIT_PASSWORD~
+- ~ENVIRONMENT='dev'~ (optional: enables verbose logging)
+** Usage
+Running ~nmfbot~ with no arguments will look at the sidebar on [[https://reddit.com/r/indieheads/][/r/indieheads]] to find the most recent New Music Friday thread, and then create a playlist from that thread.
+
+You can also run ~nmfbot --thread LINK~ to create a playlist from a specific New Music Friday thread, e.g. ~nmfbot --thread https://www.reddit.com/r/indieheads/comments/fulotr/new_music_friday_april_3rd_2020/~.
+
+Defaults:
+- The playlist name is the title of the thread it's based on
+- The playlist contains the two most popular songs, based on the Spotify ~popularity~ metric, for each album found
+- The track order is randomized
+- The playlist is public
+** MIT License
+Copyright 2020 Kyle Johnston
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
