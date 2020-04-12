@@ -3,6 +3,19 @@
 # frozen_string_literal: true
 
 require 'nmfbot'
+require 'optparse'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = 'Usage: nmfbot [options]'
+  opts.on(
+    '--thread LINK',
+    "Link to a New Music Friday thread, if you don't " \
+    'want to auto-discover the latest one.'
+  ) do |link|
+    options[:link] = link
+  end
+end.parse!
 
 # Check if environment variables are set
 ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'REDDIT_CLIENT_ID',
@@ -23,7 +36,13 @@ nmfbot = NMFbot::NMFbot.new(
   debug: debug
 )
 
-nmf_thread = nmfbot.nmf_thread
+nmf_thread = if options[:link]
+               nmfbot.reddit_scraper.get_endpoint(
+                 options[:link].gsub(%r{https://(www\.)?reddit\.com}, '')
+               )
+             else
+               nmfbot.nmf_thread
+             end
 
 new_releases = nmfbot.new_releases(nmf_thread)
 puts new_releases if debug
@@ -57,6 +76,6 @@ puts 'Adding tracks to playlist' if debug
 nmfbot.add_tracks_to_playlist(tracks, playlist)
 
 puts '-------------------'
-puts "Found matches for #{album_search_results.size} of #{new_releases.size} albums."
+puts "Found matches for #{albums.size} of #{new_releases.size} albums."
 puts "Here's your playlist."
-puts "#{playlist['name']}: #{playlist['href']}"
+puts "#{playlist['name']}: #{playlist['external_urls']['spotify']}"
