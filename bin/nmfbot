@@ -4,6 +4,7 @@
 
 require 'nmfbot'
 require 'optparse'
+require 'time'
 
 options = {}
 OptionParser.new do |opts|
@@ -16,6 +17,9 @@ OptionParser.new do |opts|
     options[:link] = link
   end
 end.parse!
+
+puts '-' * 20
+puts "nmfbot #{Time.now}"
 
 # Check if environment variables are set
 ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'REDDIT_CLIENT_ID',
@@ -73,9 +77,9 @@ puts 'Creating playlist' if debug
 playlist = nmfbot.create_playlist(nmfbot.title(nmf_thread))
 
 puts 'Adding tracks to playlist' if debug
-nmfbot.add_tracks_to_playlist(tracks, playlist)
+nmfbot.add_tracks_to_playlist(tracks.shuffle, playlist)
 
-puts '-------------------'
+puts '-' * 20
 puts "Found matches for #{albums.size} of #{new_releases.size} albums."
 puts "Here's your playlist."
 puts "#{playlist['name']}: #{playlist['external_urls']['spotify']}"
