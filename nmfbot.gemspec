@@ -7,11 +7,11 @@ Gem::Specification.new do |s|
                   "new albums listed on /r/indieheads' New Music Friday threads"
   s.authors = ['Kyle Johnston']
   s.files = [
-    'bin/nmfbot',
     'lib/nmfbot.rb',
     'lib/nmfbot/spotify.rb',
     'lib/nmfbot/reddit.rb'
   ]
+  s.executables << 'nmfbot'
   s.homepage = 'https://github.com/kylerjohnston/nmfbot'
   s.license = 'MIT'
 end
