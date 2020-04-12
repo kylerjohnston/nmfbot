@@ -11,6 +11,9 @@ require 'json'
 require 'time'
 
 module NMFbot
+  class InvalidResponse < RuntimeError
+  end
+
   # This class authenticates to and interacts with the Spotify API
   class SpotifyScraper
     # @param client_id [String] Spotify client id
@@ -48,7 +51,7 @@ module NMFbot
       created = @access_token['created'].to_i
       now = Time.now.to_i
       expires = @access_token['expires_in'].to_i
-      if created - now > expires
+      if now - created > expires
         @access_token = request_access_token(refresh: true)
       end
       @access_token['access_token']
@@ -110,7 +113,8 @@ module NMFbot
 
       response = http.request(request)
       unless response.code == '200'
-        raise StandardError, "Bad response. #{response.code} #{response.body}"
+        raise InvalidResponse,
+              "#{response.code} #{response.body}"
       end
 
       token = JSON.parse(response.body)
@@ -128,7 +132,9 @@ module NMFbot
 
     # @param endpoint [String] Spotify API to GET
     # @return [Hash/Array] - the response body
-    def get(endpoint)
+    def get(endpoint, retries: 0)
+      raise InvalidResponse, 'Too many retries' if retries > 3
+
       uri = URI(endpoint)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
@@ -137,14 +143,30 @@ module NMFbot
       request['authorization'] = "Bearer #{access_token}"
 
       response = http.request(request)
-      # TODO: Add logic to handle bad response
-      JSON.parse(response.body)
+
+      case response.code
+      when '200', '201', '202', '204'
+        JSON.parse(response.body)
+      # Unauthorized; most likely access token is expired
+      when '401'
+        puts '401 Unauthorized. Refreshing access token...'
+        @access_token = request_access_token(refresh: true)
+        get(endpoint, retries: retries + 1)
+      # Too many requests
+      when '429'
+        puts '429 Too Many Requests. Sleeping...'
+        sleep response['Retry-After'].to_i
+        get(endpoint, retries: retries + 1)
+      else
+        raise InvalidResponse,
+              "#{response.code} #{response.body}"
+      end
     end
 
     # @param endpoint [String] the Spotify API endpoint to POST
     # @param body [String] - hash.to_json
     # @return [Hash/Array] - POST response body
-    def post(endpoint, body)
+    def post(endpoint, body, retries: 0)
       uri = URI(endpoint)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
@@ -158,8 +180,24 @@ module NMFbot
       request.body = body
 
       response = http.request(request)
-      # TODO: Add logic to handle bad response
-      JSON.parse(response.body)
+
+      case response.code
+      when '200', '201', '202', '204'
+        JSON.parse(response.body)
+      # Unauthorized; most likely access token is expired
+      when '401'
+        puts '401 Unauthorized. Refreshing access token...'
+        @access_token = request_access_token(refresh: true)
+        post(endpoint, body, retries: retries + 1)
+      # Too many requests
+      when '429'
+        puts '429 Too Many Requests. Sleeping...'
+        sleep response['Retry-After'].to_i
+        post(endpoint, body, retries: retries + 1)
+      else
+        raise InvalidResponse,
+              "#{response.code} #{response.body}"
+      end
     end
   end
 end
