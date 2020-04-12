@@ -155,7 +155,8 @@ module NMFbot
     def create_playlist(name)
       body = {
         'name' => name,
-        'description' => "The most popular tracks from this week's New Music Friday on /r/indieheads"
+        'description' => "The most popular tracks from this week's " \
+                         'New Music Friday thread on the indieheads subreddit.'
       }
       url = "https://api.spotify.com/v1/users/#{spotify_user_id}/playlists"
 
