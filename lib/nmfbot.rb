@@ -5,7 +5,7 @@ require 'nmfbot/reddit'
 
 # Namespace module for nmfbot gem functionality
 module NMFbot
-  VERSION = '0.1.1'
+  VERSION = '0.1.2'
   CONFIG_DIR = File.expand_path('~/.nmfbot')
   TOKEN_FILE = "#{CONFIG_DIR}/spotify_token.json"
 
