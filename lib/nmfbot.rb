@@ -44,7 +44,8 @@ module NMFbot
 
       puts 'Creating Spotify session.' if debug
       @spotify = SpotifyScraper.new(client_id: spotify_client_id,
-                                    client_secret: spotify_client_secret)
+                                    client_secret: spotify_client_secret,
+                                    debug: debug)
 
       # Create Redd session
       # TODO remove Redd dependency; write a simpler API wrapper
@@ -81,8 +82,8 @@ module NMFbot
       split.map do |x|
         {
           # The Spotify search API can only handle ASCII characters
-          artist: x[0].gsub(/[^[:ascii:]]/, ''),
-          album: x[1].gsub(/[^[:ascii:]]/, '')
+          artist: @spotify.sanitize(x[0]),
+          album: @spotify.sanitize(x[1])
         }
       end
     end
@@ -93,7 +94,7 @@ module NMFbot
       nmf_thread[0]['data']['children'][0]['data']['title']
     end
 
-    # @return [String] Spotify user id 
+    # @return [String] Spotify user id
     def spotify_user_id
       response = @spotify.get('https://api.spotify.com/v1/me')
       response['id']

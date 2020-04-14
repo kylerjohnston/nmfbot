@@ -23,7 +23,8 @@ module NMFbot
     #   https://developer.spotify.com/documentation/general/guides/authorization-guide/#list-of-scopes
     #   For the New Music Friday playlist, we just need `playlist-modify-public`
     def initialize(client_id:, client_secret:, redirect_uri: 'http://localhost/',
-                   scope: 'playlist-modify-public')
+                   scope: 'playlist-modify-public', debug: false)
+      @debug = debug
       @client_id = client_id
       @client_secret = client_secret
       @redirect_uri = redirect_uri
@@ -31,6 +32,7 @@ module NMFbot
 
       # Load token from file, if it exists, so we can skip the auth flow
       if File.exist?(TOKEN_FILE)
+        puts "Loading #{TOKEN_FILE} from disk." if @debug
         f = File.open(TOKEN_FILE, 'r')
         @access_token = JSON.parse(f.read)
         f.close
@@ -51,7 +53,9 @@ module NMFbot
       created = @access_token['created'].to_i
       now = Time.now.to_i
       expires = @access_token['expires_in'].to_i
+      puts 'Checking access token validity...' if @debug
       if now - created > expires
+        puts 'Access token expired. Refreshing.' if @debug
         @access_token = request_access_token(refresh: true)
       end
       @access_token['access_token']
@@ -89,6 +93,12 @@ module NMFbot
     #    "expires_in"=>3600, "refresh_token"=>"your refresh token",
     #    "scope"=>"playlist-modify-public","created"=>"1586697428"}
     def request_access_token(refresh: false)
+      if refresh && @access_token['refresh_token'].nil?
+        puts 'WARNING: No refresh token. Requesting new token.'
+        @authorization_code = request_authorization_code
+        return request_access_token(refresh: false)
+      end
+
       uri = URI.parse('https://accounts.spotify.com/api/token')
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
@@ -109,6 +119,7 @@ module NMFbot
                     }
                   end
 
+      puts "POST #{form_data}" if @debug
       request.set_form_data(form_data)
 
       response = http.request(request)
@@ -130,6 +141,7 @@ module NMFbot
       token
     end
 
+    # See https://developer.spotify.com/documentation/web-api/#response-status-codes
     # @param endpoint [String] Spotify API to GET
     # @return [Hash/Array] - the response body
     def get(endpoint, retries: 0)
@@ -159,10 +171,11 @@ module NMFbot
         get(endpoint, retries: retries + 1)
       else
         raise InvalidResponse,
-              "#{response.code} #{response.body}"
+              "GET #{endpoint} returned #{response.code} #{response.body}"
       end
     end
 
+    # See https://developer.spotify.com/documentation/web-api/#response-status-codes
     # @param endpoint [String] the Spotify API endpoint to POST
     # @param body [String] - hash.to_json
     # @return [Hash/Array] - POST response body
@@ -196,8 +209,18 @@ module NMFbot
         post(endpoint, body, retries: retries + 1)
       else
         raise InvalidResponse,
+              "POST #{endpoint} #{body} returned " \
               "#{response.code} #{response.body}"
       end
+    end
+
+    # Sanitize strings of characters that break spotify's search API
+    # @param sanitize [String] string to be sanitized
+    # @return [String] string with non-ASCII, non-alphanumeric
+    #   characters removed
+    def sanitize(str)
+      str.gsub(/[^[:ascii:]]/, '')
+         .gsub(/[^A-Za-z0-9\s]/, '')
     end
   end
 end
