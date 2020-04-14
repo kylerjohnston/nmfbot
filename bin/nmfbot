@@ -25,7 +25,7 @@ puts "nmfbot #{Time.now}"
 ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET', 'REDDIT_CLIENT_ID',
  'REDDIT_CLIENT_SECRET', 'REDDIT_USERNAME',
  'REDDIT_PASSWORD'].each do |x|
-  raise ArgumentError "#{x} not set" unless ENV.include?(x)
+  raise "#{x} not set" unless ENV.include?(x)
 end
 
 debug = ENV['ENVIRONMENT'] == 'dev'
