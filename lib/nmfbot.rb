@@ -30,14 +30,6 @@ module NMFbot
                    reddit_client_id:, reddit_client_secret:,
                    reddit_username:, reddit_password:,
                    debug: false)
-      if debug
-        puts "Spotify client id: #{spotify_client_id}"
-        puts "Spotify client sercret: #{spotify_client_secret}"
-        puts "Reddit client id: #{reddit_client_id}"
-        puts "Reddit client secret: #{reddit_client_secret}"
-        puts "Reddit username: #{reddit_username}"
-        puts "Reddit password: #{reddit_password}"
-      end
 
       # Create config directory to store Spotify token
       Dir.mkdir(CONFIG_DIR) unless Dir.exist?(CONFIG_DIR)
@@ -81,9 +73,11 @@ module NMFbot
       split = matches.map { |x| x.gsub(/(\*|\[|\])/, '').split(' - ') }
       split.map do |x|
         {
-          # The Spotify search API can only handle ASCII characters
-          artist: @spotify.sanitize(x[0]),
-          album: @spotify.sanitize(x[1])
+          # The New Music Friday thread often adds parenthetical descriptions
+          # to album or artist names. E.g. "Mothertime (EP)" or
+          # "Oscar Cash (of Metronomy)"
+          artist: x[0].gsub(/\(.+\)/, ''),
+          album: x[1].gsub(/\(.+\)/, '')
         }
       end
     end
@@ -105,16 +99,22 @@ module NMFbot
     # @return [Hash<Spotify Simplified Album Object>]
     #   https://developer.spotify.com/documentation/web-api/reference/object-model/#album-object-simplified
     def search_for_album(album:, artist:)
-      query = "q=album:#{album} artist:#{artist}&type=album".gsub(' ', '+')
+      query = "q=album:#{@spotify.sanitize(album)} " \
+              "artist:#{@spotify.sanitize(artist)}&type=album".gsub(' ', '+')
       url = "https://api.spotify.com/v1/search?#{query}"
       response = @spotify.get(url)
-      response['albums']['items'].each do |result|
-        if result['artists'][0]['name'].match?(/#{Regexp.quote(artist)}/i) &&
-           result['name'].match?(/#{Regexp.quote(album)}/i)
-          return result
-        end
-      end
-      nil
+
+      # response['albums']['items'].each do |result|
+      #  if result['artists'][0]['name'].match?(/#{Regexp.quote(artist)}/i) &&
+      #     result['name'].match?(/#{Regexp.quote(album)}/i)
+      #    return result
+      #  end
+      # end
+      # nil
+
+      # I think we should trust Spotify's search algo here...
+      # Just return their best guess!
+      response['albums']['items'][0]
     end
 
     # @param albums [Array<Spotify Simplified Album Objects>]
