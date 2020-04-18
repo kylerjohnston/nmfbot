@@ -59,7 +59,11 @@ module NMFbot
     def nmf_thread
       indieheads_subreddit_about = @reddit_scraper
                                    .get_endpoint('/r/indieheads/about')
-      pattern = /https:\/\/www.reddit.com\/r\/indieheads\/comments\/[a-z]+\/new_music_friday_[a-z]+_[0-9]{1,2}[a-z]{1,2}_[0-9]{4}\//
+      pattern = %r{
+        https:\/\/www.reddit.com\/r\/indieheads\/
+        comments\/[a-z0-9]+\/
+        new_music_friday_[a-z]+_[0-9]{1,2}[a-z]{1,2}_[0-9]{4}\/
+        }x
       match = pattern.match(indieheads_subreddit_about['data']['description'])[0]
       @reddit_scraper.get_endpoint(match.gsub(/https:\/\/www\.reddit\.com/, ''))
     end
