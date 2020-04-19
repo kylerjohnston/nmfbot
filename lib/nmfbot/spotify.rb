@@ -36,6 +36,7 @@ module NMFbot
         f = File.open(TOKEN_FILE, 'r')
         @access_token = JSON.parse(f.read)
         f.close
+        puts @access_token if @debug
       else
         # We need to have the user get an authorization code, and then request
         # an access token using that code.
@@ -95,6 +96,7 @@ module NMFbot
     def request_access_token(refresh: false)
       if refresh && @access_token['refresh_token'].nil?
         puts 'WARNING: No refresh token. Requesting new token.'
+        puts @access_token if @debug
         @authorization_code = request_authorization_code
         return request_access_token(refresh: false)
       end
@@ -130,14 +132,16 @@ module NMFbot
 
       token = JSON.parse(response.body)
 
+      # Adding a `created` UNIX timestamp to determine when the token needs to
+      # be refreshed.
+      token['created'] = Time.now.to_i
+
       # The token returned from a `refresh_token` request does not include
       # a new refresh token. Don't save this token, we won't be able to
       # use it to get a new one.
-      unless refresh
-        # Adding a `created` UNIX timestamp to determine when the token needs to
-        # be refreshed.
-        token['created'] = Time.now.to_i
-
+      if refresh
+        token['refresh_token'] = @access_token['refresh_token']
+      else
         File.open(TOKEN_FILE, 'w') do |f|
           f.write(token.to_json)
         end
