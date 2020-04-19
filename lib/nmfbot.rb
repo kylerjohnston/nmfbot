@@ -60,12 +60,13 @@ module NMFbot
       indieheads_subreddit_about = @reddit_scraper
                                    .get_endpoint('/r/indieheads/about')
       pattern = %r{
-        https:\/\/www.reddit.com\/r\/indieheads\/
+        https:\/\/www.reddit.com
+        (\/r\/indieheads\/
         comments\/[a-z0-9]+\/
-        new_music_friday_[a-z]+_[0-9]{1,2}[a-z]{1,2}_[0-9]{4}\/
+        new_music_friday_[a-z]+_[0-9]{1,2}[a-z]{1,2}_[0-9]{4}\/)
         }x
       match = pattern.match(indieheads_subreddit_about['data']['description'])[0]
-      @reddit_scraper.get_endpoint(match.gsub(/https:\/\/www\.reddit\.com/, ''))
+      @reddit_scraper.get_endpoint(match[1])
     end
 
     # @param nmf_thread [Array<Reddit Listing>] - the listing for this week's NMF thread
