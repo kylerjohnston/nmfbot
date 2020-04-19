@@ -130,12 +130,17 @@ module NMFbot
 
       token = JSON.parse(response.body)
 
-      # Adding a `created` UNIX timestamp to determine when the token needs to
-      # be refreshed.
-      token['created'] = Time.now.to_i
+      # The token returned from a `refresh_token` request does not include
+      # a new refresh token. Don't save this token, we won't be able to
+      # use it to get a new one.
+      unless refresh
+        # Adding a `created` UNIX timestamp to determine when the token needs to
+        # be refreshed.
+        token['created'] = Time.now.to_i
 
-      File.open(TOKEN_FILE, 'w') do |f|
-        f.write(token.to_json)
+        File.open(TOKEN_FILE, 'w') do |f|
+          f.write(token.to_json)
+        end
       end
 
       token

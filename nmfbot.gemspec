@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name = 'nmfbot'
-  s.version = '0.1.2'
-  s.date = '2020-04-12'
+  s.version = '0.1.3'
+  s.date = '2020-04-19'
   s.summary = 'nmfbot'
   s.description = 'Create Spotify playlists of the most popular tracks from ' \
                   "new albums listed on /r/indieheads' New Music Friday threads"
