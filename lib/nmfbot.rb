@@ -5,7 +5,7 @@ require 'nmfbot/reddit'
 
 # Namespace module for nmfbot gem functionality
 module NMFbot
-  VERSION = '0.1.3'
+  VERSION = '0.1.4'
   CONFIG_DIR = File.expand_path('~/.nmfbot')
   TOKEN_FILE = "#{CONFIG_DIR}/spotify_token.json"
 
@@ -30,6 +30,7 @@ module NMFbot
                    reddit_client_id:, reddit_client_secret:,
                    reddit_username:, reddit_password:,
                    debug: false)
+      @debug = debug
 
       # Create config directory to store Spotify token
       Dir.mkdir(CONFIG_DIR) unless Dir.exist?(CONFIG_DIR)
@@ -57,6 +58,7 @@ module NMFbot
     # @return [Array<Reddit Listing>] - this week's New Music Friday thread from
     #   /r/indieheads.
     def nmf_thread
+      puts 'Getting /r/indieheads/about' if @debug
       indieheads_subreddit_about = @reddit_scraper
                                    .get_endpoint('/r/indieheads/about')
       pattern = %r{
@@ -65,8 +67,9 @@ module NMFbot
         comments\/[a-z0-9]+\/
         new_music_friday_[a-z]+_[0-9]{1,2}[a-z]{1,2}_[0-9]{4}\/)
         }x
-      match = pattern.match(indieheads_subreddit_about['data']['description'])[0]
-      @reddit_scraper.get_endpoint(match[1])
+      match = pattern.match(indieheads_subreddit_about['data']['description'])[1]
+      puts "Matched NMF thread: #{match}" if @debug
+      @reddit_scraper.get_endpoint(match)
     end
 
     # @param nmf_thread [Array<Reddit Listing>] - the listing for this week's NMF thread
